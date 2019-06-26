@@ -1,32 +1,66 @@
-from tensorflow.python.keras.callbacks import ModelCheckpoint
+import numpy as np
 
-from PAFParser import parsepaf, file_line_count
+from PAFParser import parse_paf, file_line_count
 from Visualizer import visualize_json
-from classifier.Model import create_model
+from classifier.Classifier import create_datasets, evaluate, evaluate_autoencoder
+from classifier.Model import create_rnn_model, create_1d_conv_model, create_deep_autoencoder
 
 
 def parse(file):
     print("Line count: {}\n".format(file_line_count(file)))
-    parsepaf(file)
+    parse_paf(file)
 
 
 def visualize(file):
-    visualize_json(file, start=0, end=100)
+    visualize_json(file)
+
+
+def test_conv1d(dataset):
+    model = create_1d_conv_model()
+
+    train_x, train_y, test_x, test_y = create_datasets(dataset)
+
+    print(train_x.shape)
+    print(np.max(train_x))
+    train_x = train_x / np.max(train_x)
+    test_x = test_x / np.max(test_x)
+    print(np.max(train_x))
+
+    evaluate(model, train_x, train_y, test_x, test_y, epochs_num=9)
+
+
+def test_lstm(dataset):
+    model = create_rnn_model()
+
+    train_x, train_y, test_x, test_y = create_datasets(dataset)
+
+    print(np.max(train_x))
+    train_x = train_x / np.max(train_x)
+    test_x = test_x / np.max(test_x)
+    print(np.max(train_x))
+
+    train_x = np.expand_dims(train_x, axis=2)
+    test_x = np.expand_dims(test_x, axis=2)
+    print(train_x.shape)
+
+    evaluate(model, train_x, train_y, test_x, test_y, epochs_num=20)
+
+
+def test_autoencoder(dataset):
+    model = create_deep_autoencoder()
+
+    train_x, _, test_x, _ = create_datasets(dataset)
+
+    print(np.max(train_x))
+    train_x = train_x / np.max(train_x)
+    test_x = test_x / np.max(test_x)
+    print(np.max(train_x))
+
+    evaluate_autoencoder(model, train_x, train_x, test_x, test_x, epochs_num=50)
 
 
 if __name__ == "__main__":
     # parse("./data/1m_sample.paf")
+    # visualize("./output/classified_5000.tsv")
 
-    visualize("./output/output_2019-05-14T20:31:45.394497.json")
-
-    # with open("./data/output_2019-04-16T22:01:50.563342.json", "r") as f1:
-    #     last_line = f1.readlines()[-1]
-    #     print(last_line[-1350:])
-    # model = create_model()
-    #
-    # callback = ModelCheckpoint(
-    #     filepath='best_model.{epoch:02d}-{val_loss:.2f}.h5',
-    #     monitor='val_loss',
-    #     save_best_only=True)
-    #
-    # model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    test_conv1d("./output/categorized_400.tsv")
