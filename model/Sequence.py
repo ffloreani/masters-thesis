@@ -1,12 +1,14 @@
 import random
+from typing import List
 
 import numpy as np
 
 from classifier.Model import INPUT_LENGTH
 
-REGULAR = "regular"
-CHIMERIC = "chimeric"
-REPEAT = "repeat"
+REGULAR = "reg"
+CHIMERIC = "chi"
+REPEAT = "rep"
+LOW_QUALITY = "loq"
 
 
 class Sequence:
@@ -22,15 +24,10 @@ class Sequence:
         self.query_len = query_len
         self.bps = np.zeros(query_len)
 
-    def print(self, file_handle, last_sequence=False):
+    def print(self, file_handle):
         overlaps = ",".join(map(str, self.bps.tolist()))
-
-        json = "{\"id\":\"%s\",\"origLen\":\"%s\",\"overlaps\":\"%s\"}" % (self.query_id, self.query_len, overlaps)
-
-        if not last_sequence:
-            json = json + ",\n"
-
-        file_handle.write(json)
+        serialized = "%s\t%s\t%s\t%s\n" % (self.query_id, self.query_len, self.type, overlaps)
+        file_handle.write(serialized)
 
     def append(self, query_hit_start, query_hit_end):
         for index in range(query_hit_start, query_hit_end):
@@ -41,15 +38,35 @@ class Sequence:
         if padding == 0:
             return
 
-        # print("Padding sequence by data interpolation".format(padding * 2))
-        self.bps = np.concatenate((np.zeros(padding), self.bps))
-        self.bps = np.append(self.bps, np.zeros(padding))
+        print(padding)
+        extended_bps: List = self.bps.tolist()
+
+        i = 0
+        while padding > 0:
+            current_len = len(extended_bps)
+
+            bps_to_interpolate = min(padding, current_len)
+            interpolation_indices = random.sample(population=range(current_len), k=bps_to_interpolate)
+
+            last_index = current_len - 1
+            for idx in range(current_len):  # Go through existing BPs
+                if idx in interpolation_indices:
+                    if idx == last_index:
+                        point = (extended_bps[idx - 1] + extended_bps[idx]) // 2
+                        extended_bps.insert(idx, point)
+                    else:
+                        point = (extended_bps[idx] + extended_bps[idx + 1]) // 2
+                        extended_bps.insert(idx + 1, point)
+
+            padding = padding - bps_to_interpolate
+            i = i + 1
+
+        self.bps = np.array(extended_bps)
 
     def trim_sequence(self):
         excess = int(self.query_len) - INPUT_LENGTH
         if excess == 0:
             return
 
-        # print("Trimming sequnece by removing {} entries".format(excess))
         drop_indexes = random.sample(population=range(0, int(self.query_len)), k=excess)
         self.bps = np.delete(self.bps, drop_indexes, axis=None)
