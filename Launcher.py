@@ -4,6 +4,7 @@ from PAFParser import parse_paf, file_line_count
 from Visualizer import visualize_json
 from classifier.Classifier import create_datasets, evaluate, evaluate_autoencoder
 from classifier.Model import create_rnn_model, create_1d_conv_model, create_deep_autoencoder
+from demo.statistics import stats
 
 
 def parse(file):
@@ -63,4 +64,6 @@ if __name__ == "__main__":
     # parse("./data/1m_sample.paf")
     # visualize("./output/classified_5000.tsv")
 
-    test_conv1d("./output/categorized_400.tsv")
+    # test_conv1d("./output/categorized_400.tsv")
+
+    stats("./data/NCTC86.paf")

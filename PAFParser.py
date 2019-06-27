@@ -2,7 +2,7 @@ import subprocess
 import time
 from datetime import datetime
 
-from classifier.Model import INPUT_THRESHOLD, INPUT_LENGTH
+from classifier.Model import INPUT_LENGTH
 from model.Sequence import Sequence
 
 

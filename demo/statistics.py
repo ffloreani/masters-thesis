@@ -31,7 +31,27 @@ def stats(input_file):
                 current_query_len = int(fields[1])
 
         average = sum(lengths) // len(lengths)
-        print(average)
+        max_val = max(lengths)
+        min_val = min(lengths)
+        print("Max \\ Min \\ Average")
+        print("{} \\ {} \\ {}".format(max_val, min_val, average))
+
+        labels = ["(0, 1000)", "(1000, 3000)", "(3000, 5000)", "(5000, 10000)", "(10000, 15000)", "(15000, 20000)",
+                  "(20000, 25000)", "(25000, 30000)"]
+
+        bins = [(0, 1000), (1000, 3000), (3000, 5000), (5000, 10000), (10000, 15000), (15000, 20000), (20000, 25000),
+                (25000, 30000)]
+
+        bin_count = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        for i in lengths:
+            for idx, bin in enumerate(bins):
+                if bin[0] <= i <= bin[1]:
+                    bin_count[idx] += 1
+                    continue
+
+        print()
+        print(bin_count)
 
         plt.hist(lengths, color='b')
         plt.axhline(y=average, color='r', linestyle='-')
